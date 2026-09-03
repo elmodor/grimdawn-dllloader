@@ -10,7 +10,12 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel $(nproc)
 ```
 
-Copy build/winmm.dll to the x64 directory inside Grim Dawns install directory (and compat directory if using Linux compatibility mode).
+## Using
+Copy build/winmm.dll to the x64 directory inside Grim Dawns install directory.
+
+### Linux
+If using the Linux compatibility mode, copy build/winmm.dll also to the compat directoy inside Grim Dawns install directory.  
+Set `WINEDLLOVERRIDES="winmm=n,b" %command%` as launch option.
 
 ## winmm.def
 To generate the winmm.def you need ´mingw-w64-tools´ and a windows winmm.dll. Then you can do:  
