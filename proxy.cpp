@@ -60,13 +60,13 @@ void ResolveExports()
 
 struct LoadDllParams
 {
-    const char* name;
+    wchar_t name[MAX_PATH];
     bool reqGameDlls;
     uint32_t delay;
     uint32_t tries;
 };
 
-void LoadDll(const char* name, bool reqGameDlls, uint32_t delay = 0, uint32_t tries = 1)
+void LoadDll(const wchar_t* name, bool reqGameDlls, uint32_t delay = 0, uint32_t tries = 1)
 {
     auto* params = static_cast<LoadDllParams*>(VirtualAlloc(nullptr, sizeof(LoadDllParams), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
     if (!params)
@@ -75,7 +75,8 @@ void LoadDll(const char* name, bool reqGameDlls, uint32_t delay = 0, uint32_t tr
         return;
     }
 
-    params->name = name;
+    wcsncpy(params->name, name, MAX_PATH - 1);
+    params->name[MAX_PATH - 1] = L'\0';
     params->reqGameDlls = reqGameDlls;
     params->delay = delay;
     params->tries = tries;
@@ -86,34 +87,34 @@ void LoadDll(const char* name, bool reqGameDlls, uint32_t delay = 0, uint32_t tr
                 auto* params = static_cast<LoadDllParams*>(arg);
                 if (params->reqGameDlls)
                 {
-                    while (!GetModuleHandleA("d3d11.dll"))
+                    while (!GetModuleHandleW(L"d3d11.dll"))
                         Sleep(10);
-                    while (!GetModuleHandleA("Game.dll"))
+                    while (!GetModuleHandleW(L"Game.dll"))
                         Sleep(10);
-                    while (!GetModuleHandleA("Engine.dll"))
+                    while (!GetModuleHandleW(L"Engine.dll"))
                         Sleep(10);
                 }
                 Sleep(params->delay);
-                Log("Loading %s", params->name);
+                Log("Loading %ls", params->name);
                 HMODULE mod = nullptr;
                 for (uint32_t i = 0; i < params->tries; ++i)
                 {
-                    mod = LoadLibraryA(params->name);
+                    mod = LoadLibraryW(params->name);
                     if (!mod)
-                        Log("Loading %s failed %lu", params->name, GetLastError());
+                        Log("Loading %ls failed %lu", params->name, GetLastError());
                     Sleep(500);
-                    if (mod && GetModuleHandleA(params->name))
+                    if (mod && GetModuleHandleW(params->name))
                         break;
                     if (mod)
                         FreeLibrary(mod);
                     mod = nullptr;
                     if (i + 1 < params->tries)
-                        Log("Retrying to load %s", params->name);
+                        Log("Retrying to load %ls", params->name);
                 }
                 if (mod)
-                    Log("%s loaded OK", params->name);
+                    Log("%ls loaded OK", params->name);
                 else
-                    Log("%s failed", params->name);
+                    Log("%ls failed", params->name);
                 VirtualFree(params, 0, MEM_RELEASE);
                 return 0;
             }, params, 0, nullptr);
@@ -138,9 +139,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID)
         remove("GDDllLoader.log");
 #endif
 
-        LoadDll("dpyes.dll", false, 0, 4);
-        LoadDll("RiftgateCompanion.dll", false, 100, 1);
-        LoadDll("ItemAssistantHook_x64.dll", true, 500, 1);
+        LoadDll(L"dpyes.dll", false, 0, 4);
+        LoadDll(L"RiftgateCompanion.dll", false, 100, 1);
+        LoadDll(L"ItemAssistantHook_x64.dll", true, 500, 1);
 
         ResolveExports();
     }
